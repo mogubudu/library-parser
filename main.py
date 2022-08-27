@@ -81,9 +81,9 @@ def get_comments(url):
     text_comments = []
 
     for comment in comments:
-        text_comments += comment.find('span', class_='black')
+        text_comments.append(comment.find('span', class_='black').text)
     
-    return f'{book_name} {" ".join(text_comments)}'
+    return text_comments
     
 def get_genres(url):
     response = requests.get(url)
@@ -102,13 +102,46 @@ def get_genres(url):
     return f'{book_name} {genres}'
 
 
+def parse_book_page(html_content):
+    soup = BeautifulSoup(html_content, 'lxml')
+
+    title_tag = soup.find('h1')
+    title_tag = title_tag.text
+    book_author, book_name = title_tag.split('::')[1], title_tag.split('::')[0]
+    book_author, book_name = book_author.strip(), book_name.strip()
+
+    genres = []
+    
+    for genre in soup.find('span', class_='d_book').find_all('a'):
+        genres.append(genre.text)
+    
+    comments = soup.find_all('div', class_='texts')
+    book_comments = []
+
+    for comment in comments:
+        book_comments.append(comment.find('span', class_='black').text)
+
+    image_src = soup.find('div', class_='bookimage').find('a').find('img')['src']
+    image_url = urljoin('https://tululu.org/', image_src)
+
+    book_info = {
+        'book_author': book_author,
+        'book_name': book_name,
+        'book_genres': genres,
+        'book_comments': book_comments,
+        'image_url': image_url,
+    }
+
+    return book_info
+
+
 if __name__ == "__main__":
     
-    for book_id in range(1, 11):
+    for book_id in range(1, 10):
         book_url = f'http://tululu.org/b{book_id}/'
         download_url = f'http://tululu.org/txt.php?id={book_id}'
 
-        response = requests.get(download_url)
+        response = requests.get(book_url)
         response.raise_for_status()
 
         try:
@@ -116,7 +149,6 @@ if __name__ == "__main__":
         except requests.HTTPError:
             continue
 
-        filename = get_filename(book_url)
-        
-        image_url = get_image_url(book_url)
-        print(get_genres(book_url))
+        html_content = response.text
+        book_author = parse_book_page(html_content)
+        print(f'{book_author}')
