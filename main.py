@@ -65,7 +65,30 @@ def download_image(url, folder='images/'):
     with open(f'{filepath}', 'wb') as file:
         file.write(response.content)
 
+def get_comments(url):
+    response = requests.get(url)
+    response.raise_for_status()
+
+    soup = BeautifulSoup(response.text, 'lxml')
+    comments = soup.find_all('div', class_='texts')
+    text_comments = []
+
+    for comment in comments:
+        text_comments += comment.find('span', class_='black')
     
+    return text_comments
+
+
+def download_comments(url, folder='comments/'):
+    response = requests.get(url)
+    response.raise_for_status
+
+    os.makedirs(folder, exist_ok=True)
+    filename = get_filename(url)
+    filename = sanitize_filename(filename)
+
+
+
 
 
 if __name__ == "__main__":
@@ -85,4 +108,4 @@ if __name__ == "__main__":
         filename = get_filename(book_url)
         
         image_url = get_image_url(book_url)
-        download_image(image_url)
+        print(get_comments(book_url))
