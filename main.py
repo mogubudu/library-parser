@@ -1,3 +1,4 @@
+from operator import ge
 import os
 import requests
 
@@ -70,25 +71,35 @@ def get_comments(url):
     response.raise_for_status()
 
     soup = BeautifulSoup(response.text, 'lxml')
+
+    title_tag = soup.find('h1')
+    title_tag = title_tag.text
+    
+    book_name = title_tag.split('::')[0].strip(' ')
+    
     comments = soup.find_all('div', class_='texts')
     text_comments = []
 
     for comment in comments:
         text_comments += comment.find('span', class_='black')
     
-    return text_comments
-
-
-def download_comments(url, folder='comments/'):
+    return f'{book_name} {" ".join(text_comments)}'
+    
+def get_genres(url):
     response = requests.get(url)
-    response.raise_for_status
+    response.raise_for_status()
+    soup = BeautifulSoup(response.text, 'lxml')
 
-    os.makedirs(folder, exist_ok=True)
-    filename = get_filename(url)
-    filename = sanitize_filename(filename)
+    title_tag = soup.find('h1')
+    title_tag = title_tag.text
+    
+    book_name = title_tag.split('::')[0].strip(' ')
+    genres = []
+    
+    for genre in soup.find('span', class_='d_book').find_all('a'):
+        genres.append(genre.text)
 
-
-
+    return f'{book_name} {genres}'
 
 
 if __name__ == "__main__":
@@ -108,4 +119,4 @@ if __name__ == "__main__":
         filename = get_filename(book_url)
         
         image_url = get_image_url(book_url)
-        print(get_comments(book_url))
+        print(get_genres(book_url))
