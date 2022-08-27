@@ -22,8 +22,8 @@ def get_filename(url):
 
     title_tag = soup.find('h1')
     title_tag = title_tag.text
-    book_name = title_tag.split('::')[0].strip(' ')
-    author = title_tag.split('::')[1].strip(' ')
+    book_name = title_tag.split('::')[0].strip('')
+    author = title_tag.split('::')[1].strip('')
 
     return f'{book_name} - {author}'
 
@@ -33,7 +33,7 @@ def get_image_url(url):
     soup = BeautifulSoup(response.text, 'lxml')
 
     image_src = soup.find('div', class_='bookimage').find('a').find('img')['src']
-    return urljoin('https://tululu.org/',image_src)
+    return urljoin('https://tululu.org/', image_src)
 
 
 def download_txt(url, filename, folder='books/'):
@@ -47,8 +47,6 @@ def download_txt(url, filename, folder='books/'):
 
     with open(f'{filepath}', 'wb') as file:
         file.write(response.content)
-
-    return filepath
 
 def download_image(url, folder='images/'):
     response = requests.get(url)
@@ -72,34 +70,25 @@ def get_comments(url):
 
     soup = BeautifulSoup(response.text, 'lxml')
 
-    title_tag = soup.find('h1')
-    title_tag = title_tag.text
-    
-    book_name = title_tag.split('::')[0].strip(' ')
-    
-    comments = soup.find_all('div', class_='texts')
-    text_comments = []
+    comments_html = soup.find_all('div', class_='texts')
+    book_comments = []
 
-    for comment in comments:
-        text_comments.append(comment.find('span', class_='black').text)
+    for comment in comments_html:
+        book_comments.append(comment.find('span', class_='black').text)
     
-    return text_comments
+    return book_comments
     
 def get_genres(url):
     response = requests.get(url)
     response.raise_for_status()
     soup = BeautifulSoup(response.text, 'lxml')
 
-    title_tag = soup.find('h1')
-    title_tag = title_tag.text
-    
-    book_name = title_tag.split('::')[0].strip(' ')
     genres = []
     
     for genre in soup.find('span', class_='d_book').find_all('a'):
         genres.append(genre.text)
 
-    return f'{book_name} {genres}'
+    return genres
 
 
 def parse_book_page(html_content):
@@ -115,10 +104,10 @@ def parse_book_page(html_content):
     for genre in soup.find('span', class_='d_book').find_all('a'):
         genres.append(genre.text)
     
-    comments = soup.find_all('div', class_='texts')
+    comments_html = soup.find_all('div', class_='texts')
     book_comments = []
 
-    for comment in comments:
+    for comment in comments_html:
         book_comments.append(comment.find('span', class_='black').text)
 
     image_src = soup.find('div', class_='bookimage').find('a').find('img')['src']
