@@ -1,10 +1,19 @@
-from operator import ge
 import os
 import requests
+import argparse
 
 from bs4 import BeautifulSoup
 from pathvalidate import sanitize_filename
 from urllib.parse import urlparse, unquote, urljoin
+
+
+def create_parser():
+    parser = argparse.ArgumentParser(description='Скрипт умеет скачивать книги с сайта tululu.org')
+    parser.add_argument('start_id', type=int, default=1, nargs='?', help='Указывается номер страницы с которой начинаем скачивать книги')
+    parser.add_argument('end_id', type=int, default=10, nargs='?', help='Указывается номер последней страницы для скачивания')
+ 
+    return parser
+
 
 def check_for_redirect(response):
     status_code = response.history[0].status_code
@@ -12,28 +21,6 @@ def check_for_redirect(response):
 
     if status_code == 301 and response_url == 'https://tululu.org/':
         raise requests.HTTPError()
-
-
-def get_filename(url):
-    response = requests.get(url)
-    response.raise_for_status()
-
-    soup = BeautifulSoup(response.text, 'lxml')
-
-    title_tag = soup.find('h1')
-    title_tag = title_tag.text
-    book_name = title_tag.split('::')[0].strip('')
-    author = title_tag.split('::')[1].strip('')
-
-    return f'{book_name} - {author}'
-
-def get_image_url(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'lxml')
-
-    image_src = soup.find('div', class_='bookimage').find('a').find('img')['src']
-    return urljoin('https://tululu.org/', image_src)
 
 
 def download_txt(url, filename, folder='books/'):
@@ -47,6 +34,7 @@ def download_txt(url, filename, folder='books/'):
 
     with open(f'{filepath}', 'wb') as file:
         file.write(response.content)
+
 
 def download_image(url, folder='images/'):
     response = requests.get(url)
@@ -63,32 +51,6 @@ def download_image(url, folder='images/'):
 
     with open(f'{filepath}', 'wb') as file:
         file.write(response.content)
-
-def get_comments(url):
-    response = requests.get(url)
-    response.raise_for_status()
-
-    soup = BeautifulSoup(response.text, 'lxml')
-
-    comments_html = soup.find_all('div', class_='texts')
-    book_comments = []
-
-    for comment in comments_html:
-        book_comments.append(comment.find('span', class_='black').text)
-    
-    return book_comments
-    
-def get_genres(url):
-    response = requests.get(url)
-    response.raise_for_status()
-    soup = BeautifulSoup(response.text, 'lxml')
-
-    genres = []
-    
-    for genre in soup.find('span', class_='d_book').find_all('a'):
-        genres.append(genre.text)
-
-    return genres
 
 
 def parse_book_page(html_content):
@@ -125,8 +87,13 @@ def parse_book_page(html_content):
 
 
 if __name__ == "__main__":
-    
-    for book_id in range(1, 10):
+    parser = create_parser()
+    parse_args = parser.parse_args()
+    start_id = parse_args.start_id
+    end_id = parse_args.end_id
+    print(parse_args)
+
+    for book_id in range(start_id, end_id):
         book_url = f'http://tululu.org/b{book_id}/'
         download_url = f'http://tululu.org/txt.php?id={book_id}'
 
@@ -138,6 +105,5 @@ if __name__ == "__main__":
         except requests.HTTPError:
             continue
 
-        html_content = response.text
-        book_author = parse_book_page(html_content)
-        print(f'{book_author}')
+        book = parse_book_page(response.text)
+        #print(f'{book}')
