@@ -8,17 +8,34 @@ from urllib.parse import urlparse, unquote, urljoin
 
 
 def create_parser():
-    parser = argparse.ArgumentParser(description='Скрипт умеет скачивать книги с сайта tululu.org')
-    parser.add_argument('start_id', type=int, default=1, nargs='?', help='Указывается номер страницы с которой начинаем скачивать книги')
-    parser.add_argument('end_id', type=int, default=10, nargs='?', help='Указывается номер последней страницы для скачивания')
- 
+    parser = argparse.ArgumentParser(
+            description='''
+            Скрипт умеет скачивать книги и информацию о ней с сайта tululu.org
+            '''
+        )
+    parser.add_argument('start_id',
+                        type=int,
+                        default=1,
+                        nargs='?',
+                        help='Указывается номер страницы с которой начинаем скачивать книги'
+                        )
+
+    parser.add_argument('end_id',
+                        type=int,
+                        default=10,
+                        nargs='?',
+                        help='Указывается номер последней страницы для скачивания'
+                        )
+
     return parser
 
 
 def check_for_redirect(response):
+    response = requests.get(response)
+    response.raise_for_status()
+
     status_code = response.history[0].status_code
     response_url = response.url
-
     if status_code == 301 and response_url == 'https://tululu.org/':
         raise requests.HTTPError()
 
@@ -26,7 +43,7 @@ def check_for_redirect(response):
 def download_txt(url, filename, folder='books/'):
     response = requests.get(url)
     response.raise_for_status()
-    
+
     filename = sanitize_filename(filename)
     os.makedirs(folder, exist_ok=True)
 
@@ -44,13 +61,25 @@ def download_image(url, folder='images/'):
 
     path = urlparse(url).path
     path = unquote(path)
-    
+
     filename = os.path.basename(path)
     filename = sanitize_filename(filename)
     filepath = os.path.join(folder, filename)
 
     with open(f'{filepath}', 'wb') as file:
         file.write(response.content)
+
+
+def download_comments(comments, filename, folder='comments/'):
+
+    os.makedirs(folder, exist_ok=True)
+    filename = sanitize_filename(filename)
+    filepath = os.path.join(folder, filename)
+
+    if comments:
+        with open(f'{filepath}', 'w', encoding="utf-8") as file:
+            for comment in comments:
+                file.write(f'\n {comment}')
 
 
 def parse_book_page(html_content):
@@ -62,10 +91,10 @@ def parse_book_page(html_content):
     book_author, book_name = book_author.strip(), book_name.strip()
 
     genres = []
-    
+
     for genre in soup.find('span', class_='d_book').find_all('a'):
         genres.append(genre.text)
-    
+
     comments_html = soup.find_all('div', class_='texts')
     book_comments = []
 
@@ -91,7 +120,6 @@ if __name__ == "__main__":
     parse_args = parser.parse_args()
     start_id = parse_args.start_id
     end_id = parse_args.end_id
-    print(parse_args)
 
     for book_id in range(start_id, end_id):
         book_url = f'http://tululu.org/b{book_id}/'
@@ -101,9 +129,14 @@ if __name__ == "__main__":
         response.raise_for_status()
 
         try:
-            check_for_redirect(response)
+            check_for_redirect(download_url)
         except requests.HTTPError:
             continue
 
-        book = parse_book_page(response.text)
-        #print(f'{book}')
+        book_page_info = parse_book_page(response.text)
+        filename = f"{book_page_info['book_name']} - {book_page_info['book_author']}"
+
+        download_txt(
+            download_url,
+            filename=filename
+        )
