@@ -198,7 +198,8 @@ if __name__ == "__main__":
         try:
             filepath = download_image(image_url,
                                       folder=images_folder)
-            print(f'Обложка книги {filename} успешно сохранена - {filepath}', end='\n\n')
+            print(f'Обложка книги {filename} успешно сохранена - {filepath}',
+                  end='\n\n')
         except requests.HTTPError as error:
             print(f'Ошибка для изображения {image_url}.', error)
             continue
