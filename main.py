@@ -1,4 +1,5 @@
 import os
+import time
 import argparse
 import requests
 
@@ -156,9 +157,9 @@ if __name__ == "__main__":
 
     for book_id in range(start_id, end_id):
         book_url = f'https://tululu.org/b{book_id}/'
-        response = requests.get(book_url)
 
         try:
+            response = requests.get(book_url)
             response.raise_for_status()
             check_for_redirect(response)
         except requests.HTTPError as error:
@@ -167,6 +168,7 @@ if __name__ == "__main__":
         except requests.ConnectionError as error:
             print(f'Не удалось скачать книгу с ID {book_id}. '
                   f'Проверьте соединение с интернетом.', error)
+            time.sleep(10)
             continue
 
         book = parse_book_page(response.text)
@@ -174,7 +176,7 @@ if __name__ == "__main__":
 
         filepath = save_comments(
             book['book_comments'],
-            f'Комментарии к книге {filename}'
+            f'{filename}'
         )
         print(f'Комментарии к книге {filename} успешно сохранены - {filepath}')
 
@@ -191,6 +193,7 @@ if __name__ == "__main__":
         except requests.ConnectionError as error:
             print(f'Не удалось скачать книгу с ID {book_id}. '
                   f'Проверьте соединение с интернетом.', error)
+            time.sleep(10)
             continue
 
         image_url = urljoin(book_url, book['image_src'])
@@ -206,4 +209,5 @@ if __name__ == "__main__":
         except requests.ConnectionError as error:
             print(f'Ошибка для изображения {image_url}. '
                   f'Проверьте соединение с интернетом.', error)
+            time.sleep(10)
             continue
