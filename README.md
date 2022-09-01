@@ -13,6 +13,7 @@ pip install -r requirements.txt
 ```bash
 python main.py
 ```
+![image](https://user-images.githubusercontent.com/42252541/187942832-43ff1fc4-a2c1-4679-adff-bc3dd98d029a.png)
 
 По умолчанию программа скачивает 10 книг (id книг от 1 до 10).
 В случае если вы хотите скачать меньшее или большее количество книг, или вас интересуют книги с другими id, то при запуске скрипта можно передать аргументы командной строки:
@@ -24,4 +25,5 @@ python main.py 1 30
 ```bash
 python main.py -h
 ```
-![image](https://user-images.githubusercontent.com/42252541/187077064-09337d8f-0cdd-408a-82e1-786858d28163.png)
+![image](https://user-images.githubusercontent.com/42252541/187944089-7344d7e9-3f60-48e9-8af4-5d46669b33af.png)
+
