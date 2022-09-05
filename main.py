@@ -162,52 +162,31 @@ if __name__ == "__main__":
             response = requests.get(book_url)
             response.raise_for_status()
             check_for_redirect(response)
-        except requests.HTTPError as error:
-            print(f'Ошибка для книги с ID {book_id}.', error)
-            continue
-        except requests.ConnectionError as error:
-            print(f'Не удалось скачать книгу с ID {book_id}. '
-                  f'Проверьте соединение с интернетом.', error)
-            time.sleep(10)
-            continue
+            book = parse_book_page(response.text)
+            filename = f"{book['book_name']} - {book['book_author']}"
 
-        book = parse_book_page(response.text)
-        filename = f"{book['book_name']} - {book['book_author']}"
-
-        filepath = save_comments(
-            book['book_comments'],
-            f'{filename}'
-        )
-        print(f'Комментарии к книге {filename} успешно сохранены - {filepath}')
-
-        try:
+            filepath = save_comments(
+                book['book_comments'],
+                f'{filename}'
+            )
+            print(f'Комментарии к книге {filename} '
+                  f'успешно сохранены - {filepath}')
             filepath = download_txt(
                 book_id,
                 filename=filename,
                 folder=books_folder
             )
             print(f'Книга {filename} успешно сохранена - {filepath}')
-        except requests.HTTPError as error:
-            print(f'Ошибка для книги с ID {book_id}.', error)
-            continue
-        except requests.ConnectionError as error:
-            print(f'Не удалось скачать книгу с ID {book_id}. '
-                  f'Проверьте соединение с интернетом.', error)
-            time.sleep(10)
-            continue
-
-        image_url = urljoin(book_url, book['image_src'])
-
-        try:
+            image_url = urljoin(book_url, book['image_src'])
             filepath = download_image(image_url,
                                       folder=images_folder)
             print(f'Обложка книги {filename} успешно сохранена - {filepath}',
                   end='\n\n')
         except requests.HTTPError as error:
-            print(f'Ошибка для изображения {image_url}.', error)
+            print(f'Ошибка для книги с ID {book_id}.', error)
             continue
         except requests.ConnectionError as error:
-            print(f'Ошибка для изображения {image_url}. '
+            print(f'Не удалось скачать книгу с ID {book_id}. '
                   f'Проверьте соединение с интернетом.', error)
             time.sleep(10)
             continue
