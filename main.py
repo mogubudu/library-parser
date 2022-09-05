@@ -54,7 +54,7 @@ def create_parser():
 
 
 def check_for_redirect(response):
-    if response.history and response.url == 'https://tululu.org/':
+    if response.history:
         raise requests.HTTPError('Обнаружен редирект. '
                                  'Книгу скачать не удалось.')
 
@@ -63,7 +63,7 @@ def download_txt(book_id, filename, folder='books/'):
     payload = {
         'id': book_id,
     }
-    url = 'http://tululu.org/txt.php'
+    url = 'https://tululu.org/txt.php'
 
     response = requests.get(url, params=payload)
     response.raise_for_status()
